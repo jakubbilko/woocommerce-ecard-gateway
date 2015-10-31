@@ -9,7 +9,9 @@
  * Description: Brama płatności Ecard do WooCommerce.
  * Author: Jakub Bilko
  * Author URI: http://www.jakubbilko.pl
- * Version: 1.0
+ * Version: 1.1
+ * Updated to eCard version 20.07
+ * Updated by: Karol Kamil Kowalski & Konrad Kotelczuk
 */
 
 // load the plugin
@@ -53,9 +55,10 @@ function init_Ecard_gateway() {
 			if(isset($_GET['order_id'])) {
 				$this->send_payment($_GET['order_id']);
 			} else if(isset($_POST['COMMTYPE'])) {
-				$this->complete_payment($_POST['ORDERNUMBER'], $_POST['COMMTYPE']);
+				//$this->debug_gateway();
+				$this->complete_payment($_POST['ORDERNUMBER'], $_POST['COMMTYPE'], $_POST['CURRENTSTATE']);
 				die('OK');
-			} else if(isset($_GET['oid1'])) {
+			} else if(isset($_GET['oid'])) {
 				$order = new WC_Order($_GET['oid']);
 				wp_redirect( $this->get_return_url( $order ) );
 			}
@@ -65,9 +68,30 @@ function init_Ecard_gateway() {
 		function complete_payment($order_id, $status) {
 			$order = new WC_Order($order_id);
 			if($status == 'ACCEPTPAYMENT') {
-				$order->update_status('processing', __('Zapłacono.'));
+				if($currentState == 'payment_approved' ||
+					$currentState == 'transfer_accepted' ||
+					$currentState == 'payment_deposited' ||
+					$currentState == 'payment_closed' ||
+					$currentState == 'transfer_closed' 
+				){
+					$order->update_status('processing', __('Zapłacono.'));
+					exit();
+				}else if(
+					$currentState == 'payment_pending' ||
+					$currentState == 'transfer_pending'
+				){
+					$order->update_status('on-hold', __('Oczekiwanie na środki.'));
+					exit();
+				}else{
+					$order->update_status('failed', __('Błąd podczas zapłaty.'));
+					exit();
+				}
+			}else if($status == 'DEPOSIT')
+			{
+				$order->update_status('on-hold', __('Oczekiwanie na środki.'));
 				exit();
-			} else {
+			}
+			else {
 				$order->update_status('failed', __('Błąd podczas zapłaty.'));
 				exit();
 			}
@@ -99,9 +123,16 @@ function init_Ecard_gateway() {
 			$tohash .= '1';
 			$tohash .= 'ALL';
 			$tohash .= $link;
-			$tohash .= $link;
 			$tohash .= $date2;
 			$tohash .= $this->password;
+			
+//			echo $link;
+//
+//			remove whitespaces from hash variable
+//			$tohash = preg_replace('/\s+/', '', $tohash);
+//
+//			debug
+//			echo $tohash;
 			
 			$hash = md5($tohash);
 			
@@ -123,8 +154,7 @@ function init_Ecard_gateway() {
 			<input type="hidden" name="PAYMENTTYPE" value="ALL" />
 			<input type="hidden" name="TRANSPARENTPAGES" value="1"/>
 			<input type="hidden" name="CHARSET" value="UTF-8" />
-			<input type="hidden" name="LINKFAIL" value="{$link}" />
-			<input type="hidden" name="LINKOK" value="{$link}" />
+			<input type="hidden" name="RETURNLINK" value="{$link}" />
 			<input type="hidden" name="HASHALGORITHM" value="MD5"/>
 			<input type="hidden" name="HASH" value="{$hash}"/> <noscript>
 			Twoja przeglądarka nie obsługuje JavaScript<br/>
@@ -207,7 +237,16 @@ FORM;
 			);
 			
 		}
-		
+		//debugging POST from eCard
+
+		function debug_gateway(){
+			ob_start();
+			var_dump($GLOBALS);
+			$data = ob_get_clean();
+			$fp = fopen("ecard_post_debug.txt", "w");
+			fwrite($fp, $data);
+			fclose($fp);
+		}
 	}
 	
 	new WC_Gateway_Ecard();
