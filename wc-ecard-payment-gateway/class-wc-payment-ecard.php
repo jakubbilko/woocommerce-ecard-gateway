@@ -25,7 +25,7 @@ function init_Ecard_gateway() {
 			
 			global $woocommerce;
 			
-			$this->id = __('Ecard', 'woocommerce');
+			$this->id = 'ecard';
 			$this->has_fields = false;
 			$this->method_title = __('eCard', 'woocommerce');
 			$this->notify_link = str_replace('https:', 'http:', add_query_arg('wc-api', 'WC_Gateway_Ecard', home_url('/')));
