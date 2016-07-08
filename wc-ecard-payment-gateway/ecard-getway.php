@@ -23,14 +23,14 @@ function init_Ecard_gateway() {
 
 	if ( ! class_exists( 'WC_Payment_Gateway' ) ) return;
 
-	include_once( 'woocommerce-ecard.php' );
+	include_once( 'class-wc-payment-ecard.php' );
 
 	add_filter('woocommerce_payment_gateways', 'add_Ecard_gateway');
 
 	function add_Ecard_gateway($methods) {
-    	$methods[] = 'WC_Gateway_Ecard';
-    	return $methods;
-  	}
+		$methods[] = 'WC_Gateway_Ecard';
+		return $methods;
+	}
 }
 
 ?>
