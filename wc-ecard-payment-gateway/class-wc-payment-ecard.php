@@ -1,31 +1,12 @@
 <?php
-/*
- * Ecard Woocommerce Payment Gateway
- *
- * @author Jakub Bilko
- *
- * Plugin Name: Ecard Woocommerce Payment Gateway
- * Plugin URI: http://www.jakubbilko.pl
- * Description: Brama płatności Ecard do WooCommerce.
- * Author: Jakub Bilko
- * Author URI: http://www.jakubbilko.pl
- * Version: 1.1
- * Updated to eCard version 20.07
- * Updated by: Karol Kamil Kowalski & Konrad Kotelczuk
-*/
 
-// load the plugin
-add_action('plugins_loaded', 'init_Ecard_gateway');
-
-function init_Ecard_gateway() {
-	
 	class WC_Gateway_Ecard extends WC_Payment_Gateway {
 		
 		function __construct() {
 			
 			global $woocommerce;
 			
-			$this->id = __('Ecard', 'woocommerce');
+			$this->id = __('ecard', 'woocommerce');
 			$this->has_fields = false;
 			$this->method_title = __('eCard', 'woocommerce');
 			$this->notify_link = str_replace('https:', 'http:', add_query_arg('wc-api', 'WC_Gateway_Ecard', home_url('/')));
@@ -40,9 +21,7 @@ function init_Ecard_gateway() {
 			$this->password = $this->get_option('password');
 	        
 	        // actions, hooks and filters
-	        
-	        add_filter('woocommerce_payment_gateways', array($this, 'add_Ecard_gateway'));
-			
+	        			
 			add_action('woocommerce_update_options_payment_gateways_' . $this->id, array($this, 'process_admin_options'));
 			
 			add_filter('payment_fields', array($this, 'payment_fields'));
@@ -55,7 +34,7 @@ function init_Ecard_gateway() {
 			if(isset($_GET['order_id'])) {
 				$this->send_payment($_GET['order_id']);
 			} else if(isset($_POST['COMMTYPE'])) {
-				//$this->debug_gateway();
+				// $this->debug_gateway();
 				$this->complete_payment($_POST['ORDERNUMBER'], $_POST['COMMTYPE'], $_POST['CURRENTSTATE']);
 				die('OK');
 			} else if(isset($_GET['oid'])) {
@@ -184,15 +163,7 @@ FORM;
 				
 		}
 		
-		// add gateway
-		
-		function add_Ecard_gateway($methods) {
-        	$methods[] = 'WC_Gateway_Ecard';
-        	return $methods;
-      	}
-		
 		// settings fields
-		
 		function form_fields() {
 			
 			$this->form_fields = array(
@@ -237,8 +208,8 @@ FORM;
 			);
 			
 		}
-		//debugging POST from eCard
 
+		//debugging POST from eCard
 		function debug_gateway(){
 			ob_start();
 			var_dump($GLOBALS);
@@ -250,8 +221,5 @@ FORM;
 	}
 	
 	new WC_Gateway_Ecard();
-	
-}
-	
 	
 ?>
